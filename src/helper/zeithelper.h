@@ -20,8 +20,8 @@
 #ifndef ZEITHELPER_H
 #define ZEITHELPER_H
 
-#include <KAuth/ExecuteJob>
-#include <KAuth//HelperSupport>
+#include <KAuth/KAuthExecuteJob>
+#include <KAuth/KAuthHelperSupport>
 
 using namespace KAuth;
 
