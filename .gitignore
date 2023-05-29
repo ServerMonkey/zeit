@@ -1,5 +1,6 @@
-*~
-*.pro.user*
-*.txt.user*
-.kdev4
-build
+/.idea/
+/DEV_notes/
+/releases/
+/.gitignore
+/.directory
+/.travis.yml

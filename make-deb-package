@@ -10,32 +10,41 @@ VERSION="$(head -n1 <Changelog | sed 's/ v//g')"
 
 # variables
 NAME="zeit"
-EXE="build/src/$NAME"
 README="Readme.md"
 RELEASES="releases"
 TARGET="DEBIAN"
-MAN_PAGE=1
-FILE_MAN="$NAME.$MAN_PAGE"
+PATH_BUILD="./build"
 PATH_BASE="./$RELEASES/$NAME-$VERSION"
-PATH_INSTALL="$PATH_BASE/usr/local"
+PATH_INSTALL="$PATH_BASE/usr"
 PATH_BIN="$PATH_INSTALL/bin"
 PATH_SHARE="$PATH_INSTALL/share/$NAME"
+PATH_LIB="$PATH_INSTALL/lib"
 PATH_TARGET="$PATH_BASE/$TARGET"
-PATH_MAN="$PATH_INSTALL/share/man/man$MAN_PAGE"
 
 # delete the old build
 echo "Cleaning up old build"
-rm -rf "$PATH_BASE"
+rm -rf "$PATH_BASE" "$PATH_BUILD"
+
+# modify source
+sed -i "s|<KAuth/ExecuteJob>|<KAuth/KAuthExecuteJob>|g" src/helper/zeithelper.h
+sed -i "s|<KAuth//HelperSupport>|<KAuth/KAuthHelperSupport>|g" src/helper/zeithelper.h
+sed -i "s|<KAuth/Action>|<KAuth/KAuthAction>|g" crontablib/ctcron.cpp
+sed -i "s|<KAuth/ExecuteJob>|<KAuth/KAuthExecuteJob>|g" crontablib/ctcron.cpp
+
+# bulding binaries
+CURRENT_DIR=$(pwd)
+mkdir -p "$PATH_BUILD" || exit 1
+cd "$PATH_BUILD" || exit 1
+cmake .. || exit 1
+make -j2 || exit 1
+cd "$CURRENT_DIR" || exit 1
 
 # copy relevant files from source to release
 echo "Copying relevant source files"
-mkdir -p "$PATH_SHARE" "$PATH_BIN" "$PATH_MAN"
+mkdir -p "$PATH_SHARE" "$PATH_BIN" "$PATH_LIB"
 cp -t "$PATH_SHARE" "$README" "Copying" || exit 1
-chmod 0755 "$EXE"
-cp -t "$PATH_BIN" "$EXE" || exit 1
-
-## build man page
-#ronn -r <"$README" | gzip -9n >"$PATH_MAN/$FILE_MAN" || exit 1
+cp -t "$PATH_BIN" "build/src/$NAME" || exit 1
+cp -P -t "$PATH_LIB" "build/crontablib/libcrontab.s"* || exit 1
 
 # get description
 DESCRIPTION="Qt frontend to crontab and at"
@@ -45,7 +54,7 @@ echo "Creating CONTROL file"
 mkdir -p "$PATH_TARGET"
 echo "Package: $NAME
 Version: $VERSION
-Section: utility
+Section: utils
 Priority: optional
 Architecture: all
 Depends: cron
@@ -57,12 +66,15 @@ Description: $DESCRIPTION
 echo "Building"
 fakeroot dpkg-deb --build "$PATH_BASE"
 
+echo "Cleaning up old build"
+rm -rf "$PATH_BASE" "$PATH_BUILD"
+
 # pack source files
 echo "Packing source"
 zip -q -r "$RELEASES/$NAME-$VERSION.source.zip" ./* \
-	-x $RELEASES\* \
-	-x .*\* \
-	-x ./*DEV_\*
+    -x $RELEASES\* \
+    -x .*\* \
+    -x ./*DEV_\*
 wait
 
 # replace latest version
