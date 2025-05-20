@@ -57,7 +57,7 @@ Version: $VERSION
 Section: utils
 Priority: optional
 Architecture: all
-Depends: cron
+Depends: cron, libkf5authcore5
 Maintainer: Bodo Endres <dev@muspekaren.se>
 Description: $DESCRIPTION
 " >"$PATH_TARGET/control"
